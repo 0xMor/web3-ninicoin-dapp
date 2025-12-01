@@ -4,8 +4,8 @@ import CoinArtifact from './CoinABI.json'
 import CrowdsaleArtifact from './CrowdsaleABI.json'
 import './index.css'
 
-const TOKEN_ADDRESS = "0xfD78BCa17803f96d1A578988DA4da3Ba675b690A"
-const CROWDSALE_ADDRESS = "0xC41689E2f4908F4dfc1c037F209e464A096D7C63"
+const TOKEN_ADDRESS = "0xDFe7B8f5c17cE09aBB9a6B44b8e9BAD35dCBcA70"
+const CROWDSALE_ADDRESS = "0x27BcD03176a9aD3ad6c4a80caddA4B665024C07F"
 const SEPOLIA_CHAIN_ID = "11155111"
 
 function App() {
@@ -188,8 +188,8 @@ function App() {
                 onClick={buyTokens}
                 disabled={isLoading || !buyAmount}
                 className={`w-full font-bold text-lg py-4 rounded-xl transition-all duration-300 ${isLoading || !buyAmount
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:shadow-green-500/25 hover:scale-[1.02] active:scale-[0.98]'
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:shadow-green-500/25 hover:scale-[1.02] active:scale-[0.98]'
                   }`}
               >
                 {isLoading ? 'Procesando...' : 'COMPRAR NINKA'}
