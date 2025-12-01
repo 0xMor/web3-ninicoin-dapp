@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { ethers } from 'ethers'
 import CoinArtifact from './CoinABI.json'
+import CrowdsaleArtifact from './CrowdsaleABI.json'
 import './index.css'
 
-const CONTRACT_ADDRESS = "0x186fd4Ff894d1cC59e5Cb5a5Cd9c2a9DCd64C6CD"
+const TOKEN_ADDRESS = "0xfD78BCa17803f96d1A578988DA4da3Ba675b690A"
+const CROWDSALE_ADDRESS = "0xC41689E2f4908F4dfc1c037F209e464A096D7C63"
 const SEPOLIA_CHAIN_ID = "11155111"
 
 function App() {
@@ -12,6 +14,8 @@ function App() {
   const [userBalance, setUserBalance] = useState<string>('')
   const [userAddress, setUserAddress] = useState<string>('')
   const [networkError, setNetworkError] = useState<string>('')
+  const [buyAmount, setBuyAmount] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const connectWallet = async () => {
     if (window.ethereum) {
@@ -31,7 +35,7 @@ function App() {
         const address = await signer.getAddress()
         setUserAddress(address)
 
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinArtifact.abi, signer)
+        const contract = new ethers.Contract(TOKEN_ADDRESS, CoinArtifact.abi, signer)
 
         const name = await contract.name()
         const symbol = await contract.symbol()
@@ -47,6 +51,35 @@ function App() {
       }
     } else {
       alert("MetaMask not found!")
+    }
+  }
+
+  const buyTokens = async () => {
+    if (!buyAmount || !userAddress) return
+
+    try {
+      setIsLoading(true)
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+
+      const crowdsaleContract = new ethers.Contract(CROWDSALE_ADDRESS, CrowdsaleArtifact.abi, signer)
+
+      const tx = await crowdsaleContract.buyTokens({ value: ethers.parseEther(buyAmount) })
+      await tx.wait()
+
+      // Refresh balance
+      const tokenContract = new ethers.Contract(TOKEN_ADDRESS, CoinArtifact.abi, signer)
+      const balance = await tokenContract.balanceOf(userAddress)
+      setUserBalance(ethers.formatUnits(balance, 18))
+
+      setBuyAmount('')
+      alert("¡Compra exitosa! Has recibido tus NiniCoins.")
+
+    } catch (error) {
+      console.error("Error buying tokens:", error)
+      alert("Error al comprar tokens. Revisa la consola.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -116,31 +149,55 @@ function App() {
           </div>
 
           {/* Connect Button */}
-          <button
-            onClick={connectWallet}
-            className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-purple-600 p-0.5 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-orange-500/25 active:scale-[0.98]"
-          >
-            <div className="relative flex items-center justify-center gap-3 rounded-[10px] bg-gray-900/90 px-6 py-4 transition-all duration-300 group-hover:bg-opacity-0">
-              {userAddress ? (
-                <>
-                  <span className="font-bold text-white text-lg">Wallet Conectada</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </>
-              ) : (
-                <>
-                  <span className="font-bold text-white text-lg tracking-wide">CONECTAR WALLET</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </>
-              )}
-            </div>
-          </button>
+          {!userAddress && (
+            <button
+              onClick={connectWallet}
+              className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-purple-600 p-0.5 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-orange-500/25 active:scale-[0.98]"
+            >
+              <div className="relative flex items-center justify-center gap-3 rounded-[10px] bg-gray-900/90 px-6 py-4 transition-all duration-300 group-hover:bg-opacity-0">
+                <span className="font-bold text-white text-lg tracking-wide">CONECTAR WALLET</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+            </button>
+          )}
 
         </div>
       </div>
+
+      {/* Crowdsale Card */}
+      {userAddress && (
+        <div className="relative w-full max-w-lg mt-8 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 sm:p-10 animate-fade-in-up">
+          <div className="relative z-10">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Participar en la Preventa</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-2">ETH a invertir</label>
+                <input
+                  type="number"
+                  value={buyAmount}
+                  onChange={(e) => setBuyAmount(e.target.value)}
+                  placeholder="0.0"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-colors"
+                />
+              </div>
+
+              <button
+                onClick={buyTokens}
+                disabled={isLoading || !buyAmount}
+                className={`w-full font-bold text-lg py-4 rounded-xl transition-all duration-300 ${isLoading || !buyAmount
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:shadow-green-500/25 hover:scale-[1.02] active:scale-[0.98]'
+                  }`}
+              >
+                {isLoading ? 'Procesando...' : 'COMPRAR NINKA'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="mt-8 flex items-center gap-2 text-gray-600 text-xs font-medium tracking-wider uppercase">
