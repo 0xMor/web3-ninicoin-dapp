@@ -1,40 +1,49 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ethers } from 'ethers'
 import CoinArtifact from './CoinABI.json'
 import './index.css'
 
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-const OWNER_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-const LOCAL_RPC_URL = "http://127.0.0.1:8545"
+const CONTRACT_ADDRESS = "0x186fd4Ff894d1cC59e5Cb5a5Cd9c2a9DCd64C6CD"
+const SEPOLIA_CHAIN_ID = "11155111"
 
 function App() {
-  const [ownerBalance, setOwnerBalance] = useState<string>('')
+  const [tokenName, setTokenName] = useState<string>('')
+  const [tokenSymbol, setTokenSymbol] = useState<string>('')
+  const [userBalance, setUserBalance] = useState<string>('')
   const [userAddress, setUserAddress] = useState<string>('')
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const provider = new ethers.JsonRpcProvider(LOCAL_RPC_URL)
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinArtifact.abi, provider)
-
-        const balance = await contract.balanceOf(OWNER_ADDRESS)
-        setOwnerBalance(ethers.formatUnits(balance, 18))
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      }
-    }
-
-    fetchData()
-  }, [])
+  const [networkError, setNetworkError] = useState<string>('')
 
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
         const provider = new ethers.BrowserProvider(window.ethereum)
+        const network = await provider.getNetwork()
+
+        if (network.chainId.toString() !== SEPOLIA_CHAIN_ID) {
+          setNetworkError("Por favor, cambia a la red Sepolia")
+          return
+        }
+
+        setNetworkError('')
+
+        await provider.send("eth_requestAccounts", [])
         const signer = await provider.getSigner()
-        setUserAddress(await signer.getAddress())
+        const address = await signer.getAddress()
+        setUserAddress(address)
+
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinArtifact.abi, signer)
+
+        const name = await contract.name()
+        const symbol = await contract.symbol()
+        const balance = await contract.balanceOf(address)
+
+        setTokenName(name)
+        setTokenSymbol(symbol)
+        setUserBalance(ethers.formatUnits(balance, 18))
+
       } catch (error) {
         console.error("Error connecting wallet:", error)
+        setNetworkError("Error al conectar la wallet")
       }
     } else {
       alert("MetaMask not found!")
@@ -42,35 +51,101 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col items-center justify-center p-6">
-      <div className="bg-gray-800/50 backdrop-blur-lg p-10 rounded-2xl shadow-2xl max-w-lg w-full space-y-8 border border-gray-700">
-        <h1 className="text-5xl font-extrabold text-center bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent drop-shadow-lg">
-          Banco NiniCoin
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-slate-900 text-white flex flex-col items-center justify-center p-4 font-sans">
 
-        <div className="space-y-6">
-          <div className="bg-gray-700/50 p-6 rounded-xl border border-gray-600 hover:border-yellow-500/50 transition duration-300">
-            <p className="text-gray-400 text-sm uppercase tracking-wider mb-2">Saldo del Dueño</p>
-            <p className="text-3xl font-bold text-green-400 font-mono">
-              {ownerBalance ? `${parseFloat(ownerBalance).toLocaleString()} Ninka` : "Cargando..."}
-            </p>
-            <p className="text-xs text-gray-500 mt-2 break-all">{OWNER_ADDRESS}</p>
-          </div>
+      {/* Glassmorphism Card */}
+      <div className="relative w-full max-w-lg bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 sm:p-10">
+
+        {/* Background Glow Effects */}
+        <div className="absolute top-[-50px] left-[-50px] w-40 h-40 bg-purple-600/30 rounded-full blur-[80px]"></div>
+        <div className="absolute bottom-[-50px] right-[-50px] w-40 h-40 bg-orange-600/30 rounded-full blur-[80px]"></div>
+
+        {/* Title */}
+        <div className="relative z-10 text-center mb-12">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            Banco NiniCoin
+          </h1>
+          <p className="text-gray-400 text-sm mt-3 font-medium tracking-wide">
+            TU PORTAL DEFI EN SEPOLIA
+          </p>
         </div>
 
-        <button
-          onClick={connectWallet}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-3"
-        >
-          {userAddress ? (
-            <>
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span>Conectado: {userAddress.slice(0, 6)}...{userAddress.slice(-4)}</span>
-            </>
-          ) : (
-            <span>Conectar Wallet</span>
-          )}
-        </button>
+        {/* Error Notification */}
+        {networkError && (
+          <div className="relative z-10 mb-8 bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm text-center backdrop-blur-sm animate-fade-in">
+            <span className="block font-bold mb-1">⚠️ Error de Red</span>
+            {networkError}
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="relative z-10 space-y-8">
+
+          {/* Data Display */}
+          <div className="bg-black/40 rounded-2xl p-8 border border-white/5 shadow-inner text-center">
+            {!userAddress ? (
+              <div className="py-4">
+                <div className="w-20 h-20 bg-gray-800/50 rounded-full mx-auto mb-4 flex items-center justify-center border border-white/5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 font-medium text-lg">Conecta tu wallet</p>
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                <p className="text-gray-400 text-xs uppercase tracking-[0.2em] font-bold mb-2">Saldo Disponible</p>
+
+                <div className="flex flex-col items-center justify-center gap-1 mb-6">
+                  <span className="text-5xl sm:text-6xl font-bold text-white tracking-tighter drop-shadow-lg">
+                    {userBalance ? parseFloat(userBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}
+                  </span>
+                  <span className="text-xl font-medium text-orange-400 tracking-widest">{tokenSymbol}</span>
+                </div>
+
+                <div className="inline-flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:bg-white/10 transition-colors">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-300 text-xs font-mono tracking-wide">
+                    {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+                  </span>
+                </div>
+
+                <p className="text-gray-500 text-xs mt-4 font-medium">{tokenName}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Connect Button */}
+          <button
+            onClick={connectWallet}
+            className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-purple-600 p-0.5 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-orange-500/25 active:scale-[0.98]"
+          >
+            <div className="relative flex items-center justify-center gap-3 rounded-[10px] bg-gray-900/90 px-6 py-4 transition-all duration-300 group-hover:bg-opacity-0">
+              {userAddress ? (
+                <>
+                  <span className="font-bold text-white text-lg">Wallet Conectada</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </>
+              ) : (
+                <>
+                  <span className="font-bold text-white text-lg tracking-wide">CONECTAR WALLET</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </>
+              )}
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 flex items-center gap-2 text-gray-600 text-xs font-medium tracking-wider uppercase">
+        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+        Sepolia Testnet Live
       </div>
     </div>
   )
