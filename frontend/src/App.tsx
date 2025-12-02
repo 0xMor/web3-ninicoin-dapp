@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import CoinArtifact from './CoinABI.json'
 import CrowdsaleArtifact from './CrowdsaleABI.json'
+import StakingArtifact from './StakingABI.json'
 import './index.css'
 
 const TOKEN_ADDRESS = "0xF6327f266d87d8E1bC56D9CDad7e531E9Eed2614"
 const CROWDSALE_ADDRESS = "0xC75778FD4643F304ba6CF5523bAC0676F9E10268"
+const STAKING_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
 const SEPOLIA_CHAIN_ID = "11155111"
+const LOCAL_CHAIN_ID = "31337" // Hardhat Localhost
 
 function App() {
   const [tokenName, setTokenName] = useState<string>('')
@@ -14,7 +17,15 @@ function App() {
   const [userBalance, setUserBalance] = useState<string>('')
   const [userAddress, setUserAddress] = useState<string>('')
   const [networkError, setNetworkError] = useState<string>('')
+
+  // Crowdsale State
   const [buyAmount, setBuyAmount] = useState<string>('')
+
+  // Staking State
+  const [stakedAmount, setStakedAmount] = useState<string>('0')
+  const [rewardAmount, setRewardAmount] = useState<string>('0')
+  const [stakingAmount, setStakingAmount] = useState<string>('')
+
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isOwner, setIsOwner] = useState<boolean>(false)
 
@@ -23,9 +34,10 @@ function App() {
       try {
         const provider = new ethers.BrowserProvider(window.ethereum)
         const network = await provider.getNetwork()
+        const chainId = network.chainId.toString()
 
-        if (network.chainId.toString() !== SEPOLIA_CHAIN_ID) {
-          setNetworkError("Por favor, cambia a la red Sepolia")
+        if (chainId !== SEPOLIA_CHAIN_ID && chainId !== LOCAL_CHAIN_ID) {
+          setNetworkError("Por favor, conecta a Sepolia o Localhost")
           return
         }
 
@@ -57,6 +69,9 @@ function App() {
           console.error("Error checking owner:", e)
         }
 
+        // Initial Staking Data Fetch
+        fetchStakingData(signer, address)
+
       } catch (error) {
         console.error("Error connecting wallet:", error)
         setNetworkError("Error al conectar la wallet")
@@ -65,6 +80,35 @@ function App() {
       alert("MetaMask not found!")
     }
   }
+
+  const fetchStakingData = async (signer: any, address: string) => {
+    try {
+      const stakingContract = new ethers.Contract(STAKING_ADDRESS, StakingArtifact.abi, signer)
+
+      // Get Position
+      const position = await stakingContract.positions(address)
+      setStakedAmount(ethers.formatEther(position.amount))
+
+      // Get Rewards
+      const reward = await stakingContract.claimReward()
+      setRewardAmount(ethers.formatEther(reward))
+    } catch (error) {
+      console.error("Error fetching staking data:", error)
+    }
+  }
+
+  // Auto-refresh rewards every 5 seconds
+  useEffect(() => {
+    let interval: any
+    if (userAddress) {
+      interval = setInterval(async () => {
+        const provider = new ethers.BrowserProvider(window.ethereum)
+        const signer = await provider.getSigner()
+        fetchStakingData(signer, userAddress)
+      }, 5000)
+    }
+    return () => clearInterval(interval)
+  }, [userAddress])
 
   const buyTokens = async () => {
     if (!buyAmount || !userAddress) return
@@ -90,6 +134,75 @@ function App() {
     } catch (error) {
       console.error("Error buying tokens:", error)
       alert("Error al comprar tokens. Revisa la consola.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const approveAndStake = async () => {
+    if (!stakingAmount || !userAddress) return
+
+    try {
+      setIsLoading(true)
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const amountWei = ethers.parseEther(stakingAmount)
+
+      const tokenContract = new ethers.Contract(TOKEN_ADDRESS, CoinArtifact.abi, signer)
+      const stakingContract = new ethers.Contract(STAKING_ADDRESS, StakingArtifact.abi, signer)
+
+      // 1. Approve
+      const allowance = await tokenContract.allowance(userAddress, STAKING_ADDRESS)
+      if (allowance < amountWei) {
+        console.log("Approving tokens...")
+        const txApprove = await tokenContract.approve(STAKING_ADDRESS, amountWei)
+        await txApprove.wait()
+      }
+
+      // 2. Stake
+      console.log("Staking tokens...")
+      const txStake = await stakingContract.stake(amountWei)
+      await txStake.wait()
+
+      alert("¡Staking exitoso!")
+      setStakingAmount('')
+      fetchStakingData(signer, userAddress)
+
+      // Update Balance
+      const balance = await tokenContract.balanceOf(userAddress)
+      setUserBalance(ethers.formatUnits(balance, 18))
+
+    } catch (error) {
+      console.error("Error staking:", error)
+      alert("Error en Staking. Revisa la consola.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const withdrawStaking = async () => {
+    if (!userAddress) return
+
+    try {
+      setIsLoading(true)
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const stakingContract = new ethers.Contract(STAKING_ADDRESS, StakingArtifact.abi, signer)
+
+      const tx = await stakingContract.withdraw()
+      await tx.wait()
+
+      alert("¡Retiro exitoso! Fondos + Intereses enviados a tu wallet.")
+      fetchStakingData(signer, userAddress)
+
+      // Update Balance
+      const tokenContract = new ethers.Contract(TOKEN_ADDRESS, CoinArtifact.abi, signer)
+      const balance = await tokenContract.balanceOf(userAddress)
+      setUserBalance(ethers.formatUnits(balance, 18))
+
+    } catch (error) {
+      console.error("Error withdrawing:", error)
+      alert("Error al retirar. Revisa la consola.")
     } finally {
       setIsLoading(false)
     }
@@ -222,12 +335,75 @@ function App() {
                 onClick={buyTokens}
                 disabled={isLoading || !buyAmount}
                 className={`w-full font-bold text-lg py-4 rounded-xl transition-all duration-300 ${isLoading || !buyAmount
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:shadow-green-500/25 hover:scale-[1.02] active:scale-[0.98]'
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:shadow-green-500/25 hover:scale-[1.02] active:scale-[0.98]'
                   }`}
               >
                 {isLoading ? 'Procesando...' : 'COMPRAR NINKA'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staking Vault Card */}
+      {userAddress && (
+        <div className="relative w-full max-w-lg mt-8 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 sm:p-10 animate-fade-in-up delay-100">
+          <div className="relative z-10">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="text-2xl">💰</span>
+              <h2 className="text-2xl font-bold text-white text-center">Staking Vault</h2>
+            </div>
+            <p className="text-center text-green-400 font-bold text-sm tracking-widest mb-8 bg-green-500/10 py-1 px-3 rounded-full mx-auto w-fit">
+              1000% APY
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="bg-black/30 p-4 rounded-xl text-center border border-white/5">
+                <p className="text-gray-400 text-xs uppercase font-bold mb-1">Tus fondos bloqueados</p>
+                <p className="text-xl font-bold text-white">{parseFloat(stakedAmount).toFixed(2)}</p>
+              </div>
+              <div className="bg-black/30 p-4 rounded-xl text-center border border-white/5">
+                <p className="text-gray-400 text-xs uppercase font-bold mb-1">Intereses generados</p>
+                <p className="text-xl font-bold text-green-400 animate-pulse">{parseFloat(rewardAmount).toFixed(4)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-2">Cantidad a depositar (NINKA)</label>
+                <input
+                  type="number"
+                  value={stakingAmount}
+                  onChange={(e) => setStakingAmount(e.target.value)}
+                  placeholder="0.0"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={approveAndStake}
+                  disabled={isLoading || !stakingAmount}
+                  className={`w-full font-bold text-lg py-4 rounded-xl transition-all duration-300 ${isLoading || !stakingAmount
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]'
+                    }`}
+                >
+                  {isLoading ? 'Procesando...' : 'APROBAR & DEPOSITAR'}
+                </button>
+
+                <button
+                  onClick={withdrawStaking}
+                  disabled={isLoading || parseFloat(stakedAmount) <= 0}
+                  className={`w-full font-bold text-sm py-3 rounded-xl transition-all duration-300 border border-white/10 ${isLoading || parseFloat(stakedAmount) <= 0
+                    ? 'bg-transparent text-gray-600 cursor-not-allowed'
+                    : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
+                    }`}
+                >
+                  RETIRAR TODO + INTERESES
+                </button>
+              </div>
             </div>
           </div>
         </div>
