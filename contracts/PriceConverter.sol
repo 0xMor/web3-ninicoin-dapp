@@ -3,24 +3,14 @@ pragma solidity ^0.8.28;
 
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract PriceConverter {
-    AggregatorV3Interface internal priceFeed;
-
-    /**
-     * Network: Sepolia
-     * Aggregator: ETH/USD
-     * Address: 0x694AA1769357215DE4FAC081bf1f309aDC325306
-     */
-    constructor() {
-        priceFeed = AggregatorV3Interface(
+library PriceConverter {
+    // We change this to 'internal' so it can be used by the contract importing it
+    function getLatestPrice() internal view returns (uint256) {
+        // Sepolia ETH/USD Address
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
             0x694AA1769357215DE4FAC081bf1f309aDC325306
         );
-    }
 
-    /**
-     * Returns the latest price
-     */
-    function getLatestPrice() public view returns (int) {
         (
             /* uint80 roundID */,
             int price,
@@ -28,6 +18,9 @@ contract PriceConverter {
             /* uint timeStamp */,
             /* uint80 answeredInRound */
         ) = priceFeed.latestRoundData();
-        return price;
+
+        // Type casting: Msg.value is uint256, but Chainlink returns int.
+        // We cast it here to avoid errors in FundMe.sol
+        return uint256(price);
     }
 }
