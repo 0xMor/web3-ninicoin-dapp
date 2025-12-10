@@ -8,7 +8,7 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: "https://sepolia.drpc.org",
       // ¡AQUÍ ES DONDE BORRAS TU CLAVE REAL!
-      accounts: ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"]
+      accounts: ["62d051d2a11f65c6d7f4c159a13d542ebedb0ee11862addf7b02b6224c10dd0f"]
     }
   },
   etherscan: {

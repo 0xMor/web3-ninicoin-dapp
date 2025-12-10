@@ -1,6 +1,9 @@
 import { ethers } from "hardhat";
 
 async function main() {
+    const [deployer] = await ethers.getSigners();
+    console.log("🕵️‍♂️ Intentando desplegar con la cuenta:", deployer.address);
+    console.log("💰 Saldo de la cuenta:", (await ethers.provider.getBalance(deployer.address)).toString());
     const priceConverter = await ethers.deployContract("PriceConverter");
     await priceConverter.waitForDeployment();
 
