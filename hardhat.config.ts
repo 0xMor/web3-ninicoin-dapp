@@ -8,12 +8,12 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: "https://sepolia.drpc.org",
       // ¡AQUÍ ES DONDE BORRAS TU CLAVE REAL!
-      accounts: ["TU_CLAVE_PRIVADA_AQUI_NO_SUBIR0dd0f"]
+      accounts: ["62d051d2a11f65c6d7f4c159a13d542ebedb0ee11862addf7b02b6224c10dd0f"]
     }
   },
   etherscan: {
     // ¡AQUÍ BORRAS LA API KEY REAL!
-    apiKey: "TU_API_KEY_ETHERSCAN"
+    apiKey: "QA1A63KIXNSH5V6TVDIH6AJTUNB1YN6DEC"
   }
 };
 
