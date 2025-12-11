@@ -1,20 +1,23 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+require("dotenv").config();
+
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: "0.8.28", // <--- CAMBIO AQUÍ: Antes era 0.8.24
   networks: {
-    hardhat: {},
     sepolia: {
-      url: "https://sepolia.drpc.org",
-      // ¡AQUÍ ES DONDE BORRAS TU CLAVE REAL!
-      accounts: ["62d051d2a11f65c6d7f4c159a13d542ebedb0ee11862addf7b02b6224c10dd0f"]
-    }
+      url: SEPOLIA_RPC_URL,
+      accounts: [PRIVATE_KEY],
+      chainId: 11155111,
+    },
+    localhost: {
+      url: "http://127.0.0.1:8545/",
+      chainId: 31337,
+    },
   },
-  etherscan: {
-    // ¡AQUÍ BORRAS LA API KEY REAL!
-    apiKey: "QA1A63KIXNSH5V6TVDIH6AJTUNB1YN6DEC"
-  }
 };
 
 export default config;

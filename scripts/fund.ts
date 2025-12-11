@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 async function main() {
     // 1. Address of the deployed contract
     // Replace this with your specific deployment address if it changes
-    const contractAddress = "0x453E57f47e9d2De2f38bF153eE7c6fcbe99E0bF6";
+    const contractAddress = "0xA593a2ed825941cf9edA8dE6B0B539B7A3db20c8";
 
     // 2. Get the contract instance
     const fundMe = await ethers.getContractAt("FundMe", contractAddress);

@@ -5,11 +5,14 @@ async function main() {
 
   console.log("Deploying contracts with the account:", deployer.address);
 
-  const niniCoin = await ethers.deployContract("NiniCoin");
+  // 1. Aquí cambiamos "NiniCoin" por "FundMe"
+  // 2. El segundo argumento es la dirección del Price Feed de ETH/USD en Sepolia
+  // (Si tu constructor no pide argumentos, borra lo que hay entre corchetes [])
+  const fundMe = await ethers.deployContract("FundMe", ["0x694AA1769357215DE4FAC081bf1f309aDC325306"]);
 
-  await niniCoin.waitForDeployment();
+  await fundMe.waitForDeployment();
 
-  console.log("NiniCoin deployed to:", await niniCoin.getAddress());
+  console.log("FundMe deployed to:", await fundMe.getAddress());
 }
 
 main().catch((error) => {
