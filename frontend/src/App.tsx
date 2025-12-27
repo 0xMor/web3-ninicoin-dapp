@@ -3,6 +3,7 @@ import { ethers } from 'ethers'
 import CoinArtifact from './CoinABI.json'
 import CrowdsaleArtifact from './CrowdsaleABI.json'
 import StakingArtifact from './StakingABI.json'
+import Lottery from './Lottery.tsx'
 import './index.css'
 
 const TOKEN_ADDRESS = "0x6e45BC8a1CC39d9E7b8EC743A95eDB4ec2b29c8b"
@@ -36,7 +37,7 @@ function App() {
         const chainId = network.chainId.toString()
 
         if (chainId !== SEPOLIA_CHAIN_ID) {
-          setNetworkError("Por favor, conecta a la red Sepolia")
+          setNetworkError("Please connect to Sepolia network")
           return
         }
 
@@ -73,7 +74,7 @@ function App() {
 
       } catch (error) {
         console.error("Error connecting wallet:", error)
-        setNetworkError("Error al conectar la wallet")
+        setNetworkError("Error connecting wallet")
       }
     } else {
       alert("MetaMask not found!")
@@ -128,11 +129,11 @@ function App() {
       setUserBalance(ethers.formatUnits(balance, 18))
 
       setBuyAmount('')
-      alert("¡Compra exitosa! Has recibido tus NiniCoins.")
+      alert("Purchase successful! You received your NiniCoins.")
 
     } catch (error) {
       console.error("Error buying tokens:", error)
-      alert("Error al comprar tokens. Revisa la consola.")
+      alert("Error buying tokens. Check console.")
     } finally {
       setIsLoading(false)
     }
@@ -163,7 +164,7 @@ function App() {
       const txStake = await stakingContract.stake(amountWei)
       await txStake.wait()
 
-      alert("¡Staking exitoso!")
+      alert("Staking successful!")
       setStakingAmount('')
       fetchStakingData(signer, userAddress)
 
@@ -173,7 +174,7 @@ function App() {
 
     } catch (error) {
       console.error("Error staking:", error)
-      alert("Error en Staking. Revisa la consola.")
+      alert("Error in Staking. Check console.")
     } finally {
       setIsLoading(false)
     }
@@ -191,7 +192,7 @@ function App() {
       const tx = await stakingContract.withdraw()
       await tx.wait()
 
-      alert("¡Retiro exitoso! Fondos + Intereses enviados a tu wallet.")
+      alert("Withdrawal successful! Funds + Interest sent to your wallet.")
       fetchStakingData(signer, userAddress)
 
       // Update Balance
@@ -201,7 +202,7 @@ function App() {
 
     } catch (error) {
       console.error("Error withdrawing:", error)
-      alert("Error al retirar. Revisa la consola.")
+      alert("Error withdrawing. Check console.")
     } finally {
       setIsLoading(false)
     }
@@ -220,10 +221,10 @@ function App() {
       const tx = await crowdsaleContract.withdraw()
       await tx.wait()
 
-      alert("¡Retiro exitoso! Los fondos han sido enviados a tu wallet.")
+      alert("Withdrawal successful! Funds have been sent to your wallet.")
     } catch (error) {
       console.error("Error withdrawing funds:", error)
-      alert("Error al retirar fondos. Revisa la consola.")
+      alert("Error withdrawing funds. Check console.")
     } finally {
       setIsLoading(false)
     }
@@ -242,17 +243,17 @@ function App() {
         {/* Title */}
         <div className="relative z-10 text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            Banco NiniCoin
+            NiniCoin Bank
           </h1>
           <p className="text-gray-400 text-sm mt-3 font-medium tracking-wide">
-            TU PORTAL DEFI EN SEPOLIA
+            YOUR DEFI PORTAL ON SEPOLIA
           </p>
         </div>
 
         {/* Error Notification */}
         {networkError && (
           <div className="relative z-10 mb-8 bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm text-center backdrop-blur-sm animate-fade-in">
-            <span className="block font-bold mb-1">⚠️ Error de Red</span>
+            <span className="block font-bold mb-1">⚠️ Network Error</span>
             {networkError}
           </div>
         )}
@@ -269,11 +270,11 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <p className="text-gray-400 font-medium text-lg">Conecta tu wallet</p>
+                <p className="text-gray-400 font-medium text-lg">Connect your wallet</p>
               </div>
             ) : (
               <div className="animate-fade-in">
-                <p className="text-gray-400 text-xs uppercase tracking-[0.2em] font-bold mb-2">Saldo Disponible</p>
+                <p className="text-gray-400 text-xs uppercase tracking-[0.2em] font-bold mb-2">Available Balance</p>
 
                 <div className="flex flex-col items-center justify-center gap-1 mb-6">
                   <span className="text-5xl sm:text-6xl font-bold text-white tracking-tighter drop-shadow-lg">
@@ -301,7 +302,7 @@ function App() {
               className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 to-purple-600 p-0.5 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-orange-500/25 active:scale-[0.98]"
             >
               <div className="relative flex items-center justify-center gap-3 rounded-[10px] bg-gray-900/90 px-6 py-4 transition-all duration-300 group-hover:bg-opacity-0">
-                <span className="font-bold text-white text-lg tracking-wide">CONECTAR WALLET</span>
+                <span className="font-bold text-white text-lg tracking-wide">CONNECT WALLET</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -316,11 +317,11 @@ function App() {
       {userAddress && (
         <div className="relative w-full max-w-lg mt-8 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl overflow-hidden p-8 sm:p-10 animate-fade-in-up">
           <div className="relative z-10">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Participar en la Preventa</h2>
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Join Presale</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-400 text-sm font-medium mb-2">ETH a invertir</label>
+                <label className="block text-gray-400 text-sm font-medium mb-2">ETH to Invest</label>
                 <input
                   type="number"
                   value={buyAmount}
@@ -338,7 +339,7 @@ function App() {
                   : 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:shadow-green-500/25 hover:scale-[1.02] active:scale-[0.98]'
                   }`}
               >
-                {isLoading ? 'Procesando...' : 'COMPRAR NINKA'}
+                {isLoading ? 'Processing...' : 'BUY NINKA'}
               </button>
             </div>
           </div>
@@ -359,18 +360,18 @@ function App() {
 
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-black/30 p-4 rounded-xl text-center border border-white/5">
-                <p className="text-gray-400 text-xs uppercase font-bold mb-1">Tus fondos bloqueados</p>
+                <p className="text-gray-400 text-xs uppercase font-bold mb-1">Locked Funds</p>
                 <p className="text-xl font-bold text-white">{parseFloat(stakedAmount).toFixed(2)}</p>
               </div>
               <div className="bg-black/30 p-4 rounded-xl text-center border border-white/5">
-                <p className="text-gray-400 text-xs uppercase font-bold mb-1">Intereses generados</p>
+                <p className="text-gray-400 text-xs uppercase font-bold mb-1">Earned Rewards</p>
                 <p className="text-xl font-bold text-green-400 animate-pulse">{parseFloat(rewardAmount).toFixed(4)}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-400 text-sm font-medium mb-2">Cantidad a depositar (NINKA)</label>
+                <label className="block text-gray-400 text-sm font-medium mb-2">Deposit Amount (NINKA)</label>
                 <input
                   type="number"
                   value={stakingAmount}
@@ -389,7 +390,7 @@ function App() {
                     : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]'
                     }`}
                 >
-                  {isLoading ? 'Procesando...' : 'APROBAR & DEPOSITAR'}
+                  {isLoading ? 'Processing...' : 'APPROVE & DEPOSIT'}
                 </button>
 
                 <button
@@ -400,11 +401,18 @@ function App() {
                     : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
                     }`}
                 >
-                  RETIRAR TODO + INTERESES
+                  WITHDRAW ALL + REWARDS
                 </button>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lottery Component */}
+      {userAddress && (
+        <div className="relative w-full max-w-lg mt-8 animate-fade-in-up delay-150">
+          <Lottery />
         </div>
       )}
 
@@ -416,7 +424,7 @@ function App() {
             disabled={isLoading}
             className="w-full bg-red-500/20 border border-red-500/50 text-red-200 font-bold text-lg py-4 rounded-xl hover:bg-red-500/30 transition-all duration-300 backdrop-blur-sm"
           >
-            {isLoading ? 'Procesando...' : '⚠️ RETIRAR FONDOS (SOLO DUEÑO)'}
+            {isLoading ? 'Processing...' : '⚠️ WITHDRAW FUNDS (OWNER ONLY)'}
           </button>
         </div>
       )}
