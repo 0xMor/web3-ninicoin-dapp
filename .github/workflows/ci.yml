@@ -26,5 +26,7 @@ jobs:
       - name: Compile
         run: npx hardhat compile
 
-      - name: Test
-        run: npx hardhat test
+       - name: Test
+  env:
+    NODE_OPTIONS: --max-old-space-size=4096
+  run: npx hardhat test --no-compile
