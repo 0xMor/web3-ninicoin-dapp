@@ -16,7 +16,7 @@ The project demonstrates a robust integration of Smart Contracts with a modern, 
 
 ## 🚀 Live Demo
 
-**[Link to Vercel Deployment]** *(Coming Soon)*
+**https://block-chain-lake.vercel.app/**
 
 ## ⛓️ Smart Contracts
 
