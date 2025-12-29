@@ -49,8 +49,8 @@ Follow these steps to run the project locally:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/Morulo90/Block-chain.git
-cd curso-blockchain
+git clone https://github.com/0xMor/web3-ninicoin-dapp
+cd web3-ninicoin-dapp
 ```
 
 ### 2. Install Dependencies
