@@ -1,3 +1,5 @@
+![CI](https://github.com/0xMor/web3-ninicoin-dapp/actions/workflows/ci.yml/badge.svg)
+
 # NiniCoin DeFi Ecosystem & NFT Platform 🦄
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
