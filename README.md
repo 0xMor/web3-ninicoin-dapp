@@ -57,11 +57,14 @@ cd web3-ninicoin-dapp
 
 ### 2. Install Dependencies
 ```bash
+## 🧪 Run locally
+
+### 1) Smart contracts (Hardhat)
+```bash
 npm install
-# Navigate to frontend and install there too if needed
-cd frontend
-npm install
-cd ..
+npx hardhat compile
+npx hardhat test --no-compile
+
 ```
 
 ### 3. Run Local Blockchain (Hardhat)
